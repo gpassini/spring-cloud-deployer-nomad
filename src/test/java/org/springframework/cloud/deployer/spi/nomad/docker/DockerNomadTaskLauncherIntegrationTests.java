@@ -38,9 +38,11 @@ import org.springframework.test.context.junit4.SpringRunner;
  * @author Donovan Muller
  */
 @RunWith(SpringRunner.class)
-@SpringBootTest(classes = NomadAutoConfiguration.class, value = { "spring.cloud.consul.enabled=false",
-		"spring.cloud.deployer.nomad.restartPolicyAttempts=1" })
-public class DockerNomadTaskLauncherIntegrationTests extends AbstractTaskLauncherIntegrationTests {
+@SpringBootTest(classes = NomadAutoConfiguration.class,
+		value = { "spring.cloud.consul.enabled=false",
+				"spring.cloud.deployer.nomad.restartPolicyAttempts=1" })
+public class DockerNomadTaskLauncherIntegrationTests
+		extends AbstractTaskLauncherIntegrationTests {
 
 	@ClassRule
 	public static NomadTestSupport NomadAvailable = new NomadTestSupport();
@@ -66,6 +68,8 @@ public class DockerNomadTaskLauncherIntegrationTests extends AbstractTaskLaunche
 
 	@Override
 	protected Resource testApplication() {
-		return new DockerResource("springcloud/spring-cloud-deployer-spi-test-app:latest");
+		return new DockerResource(
+				"springcloud/spring-cloud-deployer-spi-test-app:latest");
 	}
+
 }

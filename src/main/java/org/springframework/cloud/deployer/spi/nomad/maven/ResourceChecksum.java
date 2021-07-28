@@ -1,17 +1,17 @@
 package org.springframework.cloud.deployer.spi.nomad.maven;
 
+import org.apache.commons.codec.digest.DigestUtils;
+import org.springframework.core.io.Resource;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 
-import org.apache.commons.codec.digest.DigestUtils;
-import org.springframework.core.io.Resource;
-
 public class ResourceChecksum {
 
 	/**
-	 * Generates a MDF5 hash of the provided {@link Resource} which represents the checksum.
-	 *
+	 * Generates a MDF5 hash of the provided {@link Resource} which represents the
+	 * checksum.
 	 * @param resource
 	 * @return Resource checksum
 	 */
@@ -26,4 +26,5 @@ public class ResourceChecksum {
 			throw new RuntimeException("Could not read resource to generate checksum", e);
 		}
 	}
+
 }

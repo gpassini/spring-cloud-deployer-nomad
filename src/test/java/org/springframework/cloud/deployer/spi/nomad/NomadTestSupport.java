@@ -1,6 +1,7 @@
 package org.springframework.cloud.deployer.spi.nomad;
 
-import org.springframework.boot.Banner;
+import com.hashicorp.nomad.javasdk.NomadApiClient;
+import org.springframework.boot.WebApplicationType;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.boot.test.context.TestConfiguration;
@@ -10,14 +11,12 @@ import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 
-import io.github.zanella.nomad.NomadClient;
-
 /**
  * JUnit {@link org.junit.Rule} that detects the fact that a Nomad instance is available.
  *
  * @author Donovan Muller
  */
-public class NomadTestSupport extends AbstractExternalResourceTestSupport<NomadClient> {
+public class NomadTestSupport extends AbstractExternalResourceTestSupport<NomadApiClient> {
 
 	private ConfigurableApplicationContext context;
 
@@ -26,7 +25,7 @@ public class NomadTestSupport extends AbstractExternalResourceTestSupport<NomadC
 	}
 
 	@Override
-	protected void cleanupResource() throws Exception {
+	protected void cleanupResource() {
 		context.close();
 	}
 
@@ -34,11 +33,10 @@ public class NomadTestSupport extends AbstractExternalResourceTestSupport<NomadC
 	protected void obtainResource() throws Exception {
 		//@formatter:off
 		context = new SpringApplicationBuilder(Config.class)
-			.bannerMode(Banner.Mode.OFF)
-			.web(false)
+			.web(WebApplicationType.NONE)
 			.run();
-		resource = context.getBean(NomadClient.class);
-		resource.v1.status.getLeader();
+		resource = context.getBean(NomadApiClient.class);
+		resource.getStatusApi().leader();
 		//@formatter:on
 	}
 
@@ -51,5 +49,7 @@ public class NomadTestSupport extends AbstractExternalResourceTestSupport<NomadC
 		public MavenProperties mavenProperties() {
 			return new MavenProperties();
 		}
+
 	}
+
 }

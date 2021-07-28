@@ -1,12 +1,12 @@
 package org.springframework.cloud.deployer.spi.nomad;
 
+import org.springframework.util.Assert;
+
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
-
-import org.springframework.util.Assert;
 
 /**
  * @author Donovan Muller
@@ -21,7 +21,8 @@ public interface NomadSupport {
 		Map<String, String> map = new HashMap<>();
 		for (String property : properties) {
 			String[] strings = property.split("=", 2);
-			Assert.isTrue(strings.length == 2, "Invalid command line property declared: " + property);
+			Assert.isTrue(strings.length == 2,
+					"Invalid command line property declared: " + property);
 			map.put(strings[0], strings[1]);
 		}
 
@@ -31,4 +32,5 @@ public interface NomadSupport {
 	default Long milliToNanoseconds(Long milliseconds) {
 		return TimeUnit.MILLISECONDS.toNanos(milliseconds);
 	}
+
 }

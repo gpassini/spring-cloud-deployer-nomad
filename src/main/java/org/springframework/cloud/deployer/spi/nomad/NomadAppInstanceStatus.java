@@ -1,23 +1,24 @@
 package org.springframework.cloud.deployer.spi.nomad;
 
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.Map;
-
+import com.hashicorp.nomad.apimodel.Allocation;
+import com.hashicorp.nomad.apimodel.NetworkResource;
+import com.hashicorp.nomad.apimodel.Port;
+import com.hashicorp.nomad.apimodel.Resources;
 import org.springframework.cloud.deployer.spi.app.AppInstanceStatus;
 import org.springframework.cloud.deployer.spi.app.DeploymentState;
 
-import io.github.zanella.nomad.v1.nodes.models.NodeAllocation;
-import io.github.zanella.nomad.v1.nodes.models.Resources;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 /**
  * @author Donovan Muller
  */
 public class NomadAppInstanceStatus implements AppInstanceStatus {
 
-	private NodeAllocation allocation;
+	private Allocation allocation;
 
-	public NomadAppInstanceStatus(NodeAllocation allocation) {
+	public NomadAppInstanceStatus(Allocation allocation) {
 		this.allocation = allocation;
 	}
 
@@ -34,31 +35,32 @@ public class NomadAppInstanceStatus implements AppInstanceStatus {
 	/**
 	 * Client statuses based on
 	 * https://github.com/hashicorp/nomad/blob/master/nomad/structs/structs.go#L2805
+	 *
 	 * @return the {@link DeploymentState} of deployment
 	 */
 	protected DeploymentState mapState() {
 		switch (allocation.getClientStatus()) {
 
-		case "pending":
-			return DeploymentState.deploying;
+			case "pending":
+				return DeploymentState.deploying;
 
-		case "running":
-			return DeploymentState.deployed;
+			case "running":
+				return DeploymentState.deployed;
 
-		case "failed":
-			return DeploymentState.failed;
+			case "failed":
+				return DeploymentState.failed;
 
-		case "lost":
-			return DeploymentState.failed;
+			case "lost":
+				return DeploymentState.failed;
 
-		case "dead":
-			return DeploymentState.failed;
+			case "dead":
+				return DeploymentState.failed;
 
-		case "complete":
-			return DeploymentState.undeployed;
+			case "complete":
+				return DeploymentState.undeployed;
 
-		default:
-			return DeploymentState.unknown;
+			default:
+				return DeploymentState.unknown;
 		}
 	}
 
@@ -72,11 +74,11 @@ public class NomadAppInstanceStatus implements AppInstanceStatus {
 			Map<String, String> meta = allocation.getJob().getMeta();
 			if (meta != null && !meta.isEmpty()) {
 				StringBuilder metaAttribute = new StringBuilder();
-				for (Iterator<Map.Entry<String, String>> metaIterator = meta.entrySet().iterator(); metaIterator
-						.hasNext();) {
+				for (Iterator<Map.Entry<String, String>> metaIterator = meta.entrySet()
+					.iterator(); metaIterator.hasNext(); ) {
 					final Map.Entry<String, String> entry = metaIterator.next();
-					metaAttribute.append(String.format("%s=%s%s", entry.getKey(), entry.getValue(),
-							metaIterator.hasNext() ? ", " : ""));
+					metaAttribute.append(String.format("%s=%s%s", entry.getKey(),
+						entry.getValue(), metaIterator.hasNext() ? ", " : ""));
 				}
 				result.put("meta", metaAttribute.toString());
 			}
@@ -84,21 +86,24 @@ public class NomadAppInstanceStatus implements AppInstanceStatus {
 		if (allocation.getResources() != null) {
 			Resources resources = allocation.getResources();
 			result.put("cpu", resources.getCpu().toString());
-			result.put("memory_mb", resources.getMemoryMB().toString());
-			result.put("disk_mb", resources.getDiskMB().toString());
+			result.put("memory_mb", resources.getMemoryMb().toString());
+			result.put("disk_mb", resources.getDiskMb().toString());
 			result.put("iops", resources.getIops().toString());
 			if (!resources.getNetworks().isEmpty()) {
 				for (int x = 0; x < resources.getNetworks().size(); x++) {
-					Resources.Network network = resources.getNetworks().get(x);
+					NetworkResource network = resources.getNetworks().get(x);
 					result.put(String.format("ip[%d]", x), network.getIp());
-					result.put(String.format("mbits[%d]", x), network.getMBits().toString());
+					result.put(String.format("mbits[%d]", x),
+						network.getMBits().toString());
 					result.put(String.format("device[%d]", x), network.getDevice());
 					if (!network.getDynamicPorts().isEmpty()) {
 						for (int y = 0; y < network.getDynamicPorts().size(); y++) {
-							Resources.Network.DynamicPort dynamicPort = network.getDynamicPorts().get(y);
-							result.put(String.format("dyanmic_port_label[%d][%d]", x, y), dynamicPort.getLabel());
+							Port dynamicPort = network
+								.getDynamicPorts().get(y);
+							result.put(String.format("dyanmic_port_label[%d][%d]", x, y),
+								dynamicPort.getLabel());
 							result.put(String.format("dyanmic_port_ip[%d][%d]", x, y),
-									dynamicPort.getValue().toString());
+								Integer.toString(dynamicPort.getValue()));
 						}
 					}
 				}
@@ -106,4 +111,5 @@ public class NomadAppInstanceStatus implements AppInstanceStatus {
 		}
 		return result;
 	}
+
 }

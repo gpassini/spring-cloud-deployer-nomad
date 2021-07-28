@@ -12,9 +12,11 @@ import org.springframework.cloud.deployer.spi.task.TaskStatus;
 
 public class ResourceAwareNomadTaskLauncher implements TaskLauncher {
 
-	private static final Logger logger = LoggerFactory.getLogger(ResourceAwareNomadTaskLauncher.class);
+	private static final Logger logger = LoggerFactory
+			.getLogger(ResourceAwareNomadTaskLauncher.class);
 
 	private final DockerNomadTaskLauncher dockerTaskLauncher;
+
 	private final MavenNomadTaskLauncher mavenTaskLauncher;
 
 	public ResourceAwareNomadTaskLauncher(DockerNomadTaskLauncher dockerTaskLauncher,
@@ -36,7 +38,8 @@ public class ResourceAwareNomadTaskLauncher implements TaskLauncher {
 			}
 		}
 		catch (Exception e) {
-			logger.error(String.format("Error deploying application deployment request: %s", request), e);
+			logger.error(String.format(
+					"Error deploying application deployment request: %s", request), e);
 			throw e;
 		}
 
@@ -67,4 +70,5 @@ public class ResourceAwareNomadTaskLauncher implements TaskLauncher {
 	public RuntimeEnvironmentInfo environmentInfo() {
 		return dockerTaskLauncher.environmentInfo();
 	}
+
 }

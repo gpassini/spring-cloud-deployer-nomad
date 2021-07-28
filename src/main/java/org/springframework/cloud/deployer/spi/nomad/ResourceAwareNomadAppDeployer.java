@@ -12,9 +12,11 @@ import org.springframework.cloud.deployer.spi.nomad.maven.MavenNomadAppDeployer;
 
 public class ResourceAwareNomadAppDeployer implements AppDeployer {
 
-	private static final Logger logger = LoggerFactory.getLogger(ResourceAwareNomadAppDeployer.class);
+	private static final Logger logger = LoggerFactory
+			.getLogger(ResourceAwareNomadAppDeployer.class);
 
 	private DockerNomadAppDeployer dockerAppDeployer;
+
 	private MavenNomadAppDeployer mavenAppDeployer;
 
 	public ResourceAwareNomadAppDeployer(DockerNomadAppDeployer dockerAppDeployer,
@@ -36,7 +38,8 @@ public class ResourceAwareNomadAppDeployer implements AppDeployer {
 			}
 		}
 		catch (Exception e) {
-			logger.error(String.format("Error deploying application deployment request: %s", request), e);
+			logger.error(String.format(
+					"Error deploying application deployment request: %s", request), e);
 			throw e;
 		}
 
@@ -57,4 +60,5 @@ public class ResourceAwareNomadAppDeployer implements AppDeployer {
 	public RuntimeEnvironmentInfo environmentInfo() {
 		return dockerAppDeployer.environmentInfo();
 	}
+
 }

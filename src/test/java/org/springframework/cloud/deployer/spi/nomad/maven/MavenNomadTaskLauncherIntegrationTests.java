@@ -1,8 +1,5 @@
 package org.springframework.cloud.deployer.spi.nomad.maven;
 
-import java.io.IOException;
-import java.util.Properties;
-
 import org.junit.runner.RunWith;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -15,6 +12,9 @@ import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
 import org.springframework.test.context.junit4.SpringRunner;
 
+import java.io.IOException;
+import java.util.Properties;
+
 /**
  * Integration tests for
  * {@link org.springframework.cloud.deployer.spi.nomad.maven.MavenNomadTaskLauncher}.
@@ -22,24 +22,33 @@ import org.springframework.test.context.junit4.SpringRunner;
  * @author Donovan Muller
  */
 @RunWith(SpringRunner.class)
-@SpringBootTest(classes = {
-		MavenNomadTaskLauncherIntegrationTests.TestApplication.class }, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, value = {
+@SpringBootTest(
+		classes = { MavenNomadTaskLauncherIntegrationTests.TestApplication.class },
+		webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
+		value = {
 				"maven.remoteRepositories.spring.url=https://repo.spring.io/libs-snapshot",
-				"spring.cloud.consul.enabled=false", "spring.cloud.deployer.nomad.restartPolicyAttempts=1" })
-public class MavenNomadTaskLauncherIntegrationTests extends DockerNomadTaskLauncherIntegrationTests {
+				"spring.cloud.consul.enabled=false",
+				"spring.cloud.deployer.nomad.restartPolicyAttempts=1" })
+public class MavenNomadTaskLauncherIntegrationTests
+		extends DockerNomadTaskLauncherIntegrationTests {
 
 	@Override
 	protected Resource testApplication() {
 		Properties properties = new Properties();
 		try {
-			properties.load(new ClassPathResource("integration-test-app.properties").getInputStream());
+			properties.load(new ClassPathResource("integration-test-app.properties")
+					.getInputStream());
 		}
 		catch (IOException e) {
-			throw new RuntimeException("Failed to determine which version of integration-test-app to use", e);
+			throw new RuntimeException(
+					"Failed to determine which version of integration-test-app to use",
+					e);
 		}
-		return new MavenResource.Builder(mavenProperties).groupId("org.springframework.cloud")
-				.artifactId("spring-cloud-deployer-spi-test-app").version(properties.getProperty("version"))
-				.classifier("exec").extension("jar").build();
+		return new MavenResource.Builder(mavenProperties)
+				.groupId("org.springframework.cloud")
+				.artifactId("spring-cloud-deployer-spi-test-app")
+				.version(properties.getProperty("version")).classifier("exec")
+				.extension("jar").build();
 	}
 
 	/**
@@ -53,5 +62,7 @@ public class MavenNomadTaskLauncherIntegrationTests extends DockerNomadTaskLaunc
 		public static void main(String[] args) {
 			SpringApplication.run(TestApplication.class, args);
 		}
+
 	}
+
 }

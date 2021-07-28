@@ -1,15 +1,13 @@
 package org.springframework.cloud.deployer.spi.nomad;
 
+import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.cloud.deployer.spi.nomad.docker.EntryPointStyle;
+
+import javax.validation.constraints.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-
-import javax.validation.constraints.NotNull;
-
-import org.springframework.boot.context.embedded.EmbeddedServletContainer;
-import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.cloud.deployer.spi.nomad.docker.EntryPointStyle;
 
 /**
  * @author Donovan Muller
@@ -18,32 +16,36 @@ import org.springframework.cloud.deployer.spi.nomad.docker.EntryPointStyle;
 public class NomadDeployerProperties {
 
 	/**
-	 * Configuration properties for {@link io.github.zanella.nomad.v1.nodes.models.Resources}. See
+	 * Configuration properties for
+	 * {@link io.github.zanella.nomad.v1.nodes.models.Resources}. See
 	 * https://www.nomadproject.io/docs/job-specification/resources.html
 	 */
 	public static class Resources {
 
 		/**
-		 * The <a href="https://www.nomadproject.io/docs/jobspec/json.html#CPU">CPU</a> required in
-		 * MHz. Default is 1000MHz.
+		 * The <a href="https://www.nomadproject.io/docs/jobspec/json.html#CPU">CPU</a>
+		 * required in MHz. Default is 1000MHz.
 		 */
 		private String cpu = "1000";
 
 		/**
-		 * The <a href="https://www.nomadproject.io/docs/jobspec/json.html#MemoryMB">memory</a>
+		 * The <a href=
+		 * "https://www.nomadproject.io/docs/jobspec/json.html#MemoryMB">memory</a>
 		 * required in MB. Default is 512MB.
-		 *
-		 * N.B: This should change to a much lower value once we can set -Xmx via JAVA_OPTS.
-		 *
-		 * See https://github.com/spring-cloud/spring-cloud-stream-app-maven-plugin/issues/10 for
-		 * support for JAVA_OPTS on the starter apps.
+		 * <p>
+		 * N.B: This should change to a much lower value once we can set -Xmx via
+		 * JAVA_OPTS.
+		 * <p>
+		 * See
+		 * https://github.com/spring-cloud/spring-cloud-stream-app-maven-plugin/issues/10
+		 * for support for JAVA_OPTS on the starter apps.
 		 */
 		private String memory = "512";
 
 		/**
 		 * The number of
-		 * <a href="https://www.nomadproject.io/docs/jobspec/json.html#MBits">MBits</a> in bandwidth
-		 * required.
+		 * <a href="https://www.nomadproject.io/docs/jobspec/json.html#MBits">MBits</a> in
+		 * bandwidth required.
 		 */
 		private Integer networkMBits = 10;
 
@@ -146,8 +148,8 @@ public class NomadDeployerProperties {
 	private String region = "global";
 
 	/**
-	 * A list of datacenters that should be targeted for deployment. Default value is dc1. See
-	 * https://www.nomadproject.io/docs/jobspec/json.html#Datacenters
+	 * A list of datacenters that should be targeted for deployment. Default value is dc1.
+	 * See https://www.nomadproject.io/docs/jobspec/json.html#Datacenters
 	 */
 	private List<String> datacenters = Stream.of("dc1").collect(Collectors.toList());
 
@@ -169,54 +171,58 @@ public class NomadDeployerProperties {
 	private boolean exposeViaFabio;
 
 	/**
-	 * The <a href="https://www.nomadproject.io/docs/jobspec/json.html#Path">path</a> of the http
-	 * endpoint which Consul will query to query the health
+	 * The <a href="https://www.nomadproject.io/docs/jobspec/json.html#Path">path</a> of
+	 * the http endpoint which Consul will query to query the health
 	 */
 	private String checkHttpPath = "/health";
 
 	/**
-	 * This indicates the frequency of the health checks that Consul will perform. Specified in
-	 * <b>milliseconds</b>. See https://www.nomadproject.io/docs/jobspec/json.html#Interval
+	 * This indicates the frequency of the health checks that Consul will perform.
+	 * Specified in <b>milliseconds</b>. See
+	 * https://www.nomadproject.io/docs/jobspec/json.html#Interval
 	 */
 	private Long checkInterval = 30000L;
 
 	/**
-	 * This indicates how long Consul will wait for a health check query to succeed. Specified in
-	 * <b>milliseconds</b>. See https://www.nomadproject.io/docs/jobspec/json.html#Timeout
+	 * This indicates how long Consul will wait for a health check query to succeed.
+	 * Specified in <b>milliseconds</b>. See
+	 * https://www.nomadproject.io/docs/jobspec/json.html#Timeout
 	 */
 	private Long checkTimeout = 120000L;
 
 	private Resources resources = new Resources();
 
 	/**
-	 * The <a href="https://www.nomadproject.io/docs/jobspec/json.html#DiskMB">disk</a> required in
-	 * MB. Default is 200MB.
+	 * The <a href="https://www.nomadproject.io/docs/jobspec/json.html#DiskMB">disk</a>
+	 * required in MB. Default is 200MB.
 	 */
 	private EphemeralDisk ephemeralDisk = new EphemeralDisk();
 
 	/**
-	 * The <a href="https://www.nomadproject.io/docs/jobspec/json.html#MaxFiles">maximum number of
-	 * rotated files</a> Nomad will retain. The default is 1 log file retention size.
-	 *
+	 * The <a href="https://www.nomadproject.io/docs/jobspec/json.html#MaxFiles">maximum
+	 * number of rotated files</a> Nomad will retain. The default is 1 log file retention
+	 * size.
 	 */
 	private Integer loggingMaxFiles = 1;
 
 	/**
-	 * The <a href="https://www.nomadproject.io/docs/jobspec/json.html#MaxFileSizeMB">size</a> of
-	 * each rotated file. The size is specified in MB. The default is 10MB max log file size.
+	 * The
+	 * <a href="https://www.nomadproject.io/docs/jobspec/json.html#MaxFileSizeMB">size</a>
+	 * of each rotated file. The size is specified in MB. The default is 10MB max log file
+	 * size.
 	 */
 	private Integer loggingMaxFileSize = 10;
 
 	/**
 	 * A duration to wait before restarting a task. See
-	 * https://www.nomadproject.io/docs/jobspec/json.html#Delay. Specified in <b>milliseconds</b>.
-	 * Default is 30000 milliseconds (30 seconds).
+	 * https://www.nomadproject.io/docs/jobspec/json.html#Delay. Specified in
+	 * <b>milliseconds</b>. Default is 30000 milliseconds (30 seconds).
 	 */
 	private Long restartPolicyDelay = 30000L;
 
 	/**
-	 * The Interval begins when the first task starts and ensures that only X number of attempts
-	 * number of restarts happens within it. See
+	 * The Interval begins when the first task starts and ensures that only X number of
+	 * attempts number of restarts happens within it. See
 	 * https://www.nomadproject.io/docs/jobspec/json.html#Interval. Specified in
 	 * <b>milliseconds</b>. Default is 120000 milliseconds (120 seconds / 3 minutes).
 	 */
@@ -224,15 +230,16 @@ public class NomadDeployerProperties {
 
 	/**
 	 * Attempts is the number of restarts allowed in an Interval. See
-	 * https://www.nomadproject.io/docs/jobspec/json.html#Attempts. Default is 3 attempts within 3
-	 * minutes (see {@link NomadDeployerProperties#restartPolicyInterval)
+	 * https://www.nomadproject.io/docs/jobspec/json.html#Attempts. Default is 3 attempts
+	 * within 3 minutes (see {@link NomadDeployerProperties#restartPolicyInterval)
 	 */
 	private Integer restartPolicyAttempts = 3;
 
 	/**
-	 * Mode is given as a string and controls the behavior when the task fails more than Attempts
-	 * times in an Interval. See https://www.nomadproject.io/docs/jobspec/json.html#Mode. Default
-	 * value is <a href="https://www.nomadproject.io/docs/jobspec/json.html#delay">"delay"</a>.
+	 * Mode is given as a string and controls the behavior when the task fails more than
+	 * Attempts times in an Interval. See
+	 * https://www.nomadproject.io/docs/jobspec/json.html#Mode. Default value is
+	 * <a href="https://www.nomadproject.io/docs/jobspec/json.html#delay">"delay"</a>.
 	 * Possible values are:
 	 *
 	 * <ul>
@@ -251,7 +258,7 @@ public class NomadDeployerProperties {
 	/**
 	 * A comma separated list of host_path:container_path values. See
 	 * https://www.nomadproject.io/docs/drivers/docker.html#volumes.
-	 *
+	 * <p>
 	 * E.g.
 	 *
 	 * <code>spring.cloud.deployer.nomad=/opt/data:/data,/opt/config:/config</code>
@@ -259,71 +266,73 @@ public class NomadDeployerProperties {
 	private List<String> volumes = new ArrayList<>();
 
 	/**
-	 * The destination (path) where artifacts will be downloaded by default. Only applicable to the
-	 * Maven resource deployer implementation. Default value is <code>local</code>. See
+	 * The destination (path) where artifacts will be downloaded by default. Only
+	 * applicable to the Maven resource deployer implementation. Default value is
+	 * <code>local</code>. See
 	 * https://www.nomadproject.io/docs/job-specification/artifact.html#destination
 	 */
 	private String artifactDestination = "local";
 
 	/**
-	 * A comma separated list of default Java options to pass to the JVM. Only applicable to the
-	 * Maven resource deployer implementation. See
+	 * A comma separated list of default Java options to pass to the JVM. Only applicable
+	 * to the Maven resource deployer implementation. See
 	 * http://docs.spring.io/spring-cloud-dataflow/docs/current/reference/htmlsingle/index.html#getting-started-application-configuration
 	 * for reference.
 	 */
 	private String javaOpts;
 
 	/**
-	 * The URI scheme that the deployer server is running on. When deploying Maven resource based
-	 * apps the artifact source URL includes the servers host and port. This property value is used
-	 * when constructing the source URL. Only applicable to the Maven resource deployer
-	 * implementation. See https://www.nomadproject.io/docs/job-specification/artifact.html#source
+	 * The URI scheme that the deployer server is running on. When deploying Maven
+	 * resource based apps the artifact source URL includes the servers host and port.
+	 * This property value is used when constructing the source URL. Only applicable to
+	 * the Maven resource deployer implementation. See
+	 * https://www.nomadproject.io/docs/job-specification/artifact.html#source
 	 */
 	private String deployerScheme = "http";
 
 	/**
-	 * The resolvable hostname of IP address that the deployer server is running on. When deploying
-	 * Maven resource based apps the artifact source URL includes the servers host and port. This
-	 * property value is used when constructing the source URL. Only applicable to the Maven
-	 * resource deployer implementation. See
+	 * The resolvable hostname of IP address that the deployer server is running on. When
+	 * deploying Maven resource based apps the artifact source URL includes the servers
+	 * host and port. This property value is used when constructing the source URL. Only
+	 * applicable to the Maven resource deployer implementation. See
 	 * https://www.nomadproject.io/docs/job-specification/artifact.html#source
 	 */
-	@NotNull(message = "Please configure the resolvable hostname or IP address that this server is running on. E.g. spring.cloud.deployer.nomad.deployerHost=192.168.1.10")
-	private String deployerHost;
+	@NotNull(
+			message = "Please configure the resolvable hostname or IP address that this server is running on. E.g. spring.cloud.deployer.nomad.deployerHost=192.168.1.10")
+	private String deployerHost = "localhost";
 
 	/**
-	 * The port that the deployer server is listening on. When deploying Maven resource based apps
-	 * the artifact source URL includes the servers host and port. This property value is used when
-	 * constructing the source URL. Only applicable to the Maven resource deployer implementation.
-	 * See https://www.nomadproject.io/docs/job-specification/artifact.html#source
-	 * <p>
-	 * <b>If this property is not set then the port from {@link EmbeddedServletContainer#getPort()}
-	 * will be used</b>
+	 * The port that the deployer server is listening on. When deploying Maven resource
+	 * based apps the artifact source URL includes the servers host and port. This
+	 * property value is used when constructing the source URL. Only applicable to the
+	 * Maven resource deployer implementation. See
+	 * https://www.nomadproject.io/docs/job-specification/artifact.html#source
 	 */
 	private Integer deployerPort;
 
 	/**
-	 * If basic authentication is required.
-	 * See https://github.com/hashicorp/go-getter#http-http
+	 * If basic authentication is required. See
+	 * https://github.com/hashicorp/go-getter#http-http
 	 */
 	private String deployerUsername;
 
 	/**
-	 * If basic authentication is required.
-	 * See https://github.com/hashicorp/go-getter#http-http
+	 * If basic authentication is required. See
+	 * https://github.com/hashicorp/go-getter#http-http
 	 */
 	private String deployerPassword;
 
 	/**
-	 * If set, the allocated node must support at least this version of a Java runtime environment.
-	 * E.g. '1.8' for a minimum of a Java 8 JRE/JDK. See
-	 * https://www.nomadproject.io/docs/drivers/java.html#driver_java_version. Only applicable to
-	 * the Maven resource deployer implementation.
+	 * If set, the allocated node must support at least this version of a Java runtime
+	 * environment. E.g. '1.8' for a minimum of a Java 8 JRE/JDK. See
+	 * https://www.nomadproject.io/docs/drivers/java.html#driver_java_version. Only
+	 * applicable to the Maven resource deployer implementation.
 	 */
 	private String minimumJavaVersion;
 
 	/**
-	 * See {@link org.springframework.cloud.deployer.spi.nomad.NomadAutoConfiguration.RuntimeConfiguration}
+	 * See
+	 * {@link org.springframework.cloud.deployer.spi.nomad.NomadAutoConfiguration.RuntimeConfiguration}
 	 */
 	private String runtimePlatformVersion;
 
@@ -558,4 +567,5 @@ public class NomadDeployerProperties {
 	public String getRuntimePlatformVersion() {
 		return runtimePlatformVersion;
 	}
+
 }

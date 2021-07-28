@@ -1,14 +1,11 @@
 package org.springframework.cloud.deployer.spi.nomad.docker;
 
-import static java.util.stream.Collectors.toList;
-
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Stream;
-
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.hashicorp.nomad.apimodel.*;
+import com.hashicorp.nomad.javasdk.EvaluationResponse;
+import com.hashicorp.nomad.javasdk.NomadApiClient;
+import com.hashicorp.nomad.javasdk.NomadException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.cloud.deployer.spi.app.AppDeployer;
@@ -20,32 +17,34 @@ import org.springframework.cloud.deployer.spi.core.RuntimeEnvironmentInfo;
 import org.springframework.cloud.deployer.spi.nomad.NomadDeployerProperties;
 import org.springframework.cloud.deployer.spi.nomad.NomadSupport;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
-import io.github.zanella.nomad.NomadClient;
-import io.github.zanella.nomad.v1.jobs.models.JobAllocation;
-import io.github.zanella.nomad.v1.jobs.models.JobEvalResult;
-import io.github.zanella.nomad.v1.jobs.models.JobSpec;
-import io.github.zanella.nomad.v1.jobs.models.JobSummary;
-import io.github.zanella.nomad.v1.nodes.models.Resources;
-import io.github.zanella.nomad.v1.nodes.models.Task;
+import static java.util.Collections.singletonList;
 
 /**
  * Deployer responsible for deploying
- * {@link org.springframework.cloud.deployer.resource.docker.DockerResource} based applications
- * using the Nomad <a href="https://www.nomadproject.io/docs/drivers/docker.html">Docker</a> driver.
+ * {@link org.springframework.cloud.deployer.resource.docker.DockerResource} based
+ * applications using the Nomad
+ * <a href="https://www.nomadproject.io/docs/drivers/docker.html">Docker</a> driver.
  *
  * @author Donovan Muller
  */
-public class DockerNomadAppDeployer extends AbstractDockerNomadDeployer implements AppDeployer, NomadSupport {
+public class DockerNomadAppDeployer extends AbstractDockerNomadDeployer
+	implements AppDeployer, NomadSupport {
 
-	private static final Logger logger = LoggerFactory.getLogger(DockerNomadAppDeployer.class);
+	private static final Logger logger = LoggerFactory
+		.getLogger(DockerNomadAppDeployer.class);
 
-	private NomadClient client;
-	private NomadDeployerProperties deployerProperties;
+	private final NomadApiClient client;
 
-	public DockerNomadAppDeployer(NomadClient client, NomadDeployerProperties deployerProperties) {
+	private final NomadDeployerProperties deployerProperties;
+
+	public DockerNomadAppDeployer(NomadApiClient client,
+								  NomadDeployerProperties deployerProperties) {
 		super(client, deployerProperties);
 
 		this.client = client;
@@ -58,13 +57,20 @@ public class DockerNomadAppDeployer extends AbstractDockerNomadDeployer implemen
 
 		AppStatus status = status(deploymentId);
 		if (!status.getState().equals(DeploymentState.unknown)) {
-			throw new IllegalStateException(String.format("App '%s' is already deployed", deploymentId));
+			throw new IllegalStateException(
+				String.format("App '%s' is already deployed", deploymentId));
 		}
 
-		JobSpec jobSpec = buildJobSpec(deploymentId, deployerProperties, request);
+		Job jobSpec = buildJobSpec(deploymentId, deployerProperties, request);
 		jobSpec.setTaskGroups(buildTaskGroups(deploymentId, request, deployerProperties));
 
-		JobEvalResult jobEvalResult = client.v1.jobs.postJob(jobSpec);
+		EvaluationResponse jobEvalResult;
+		try {
+			jobEvalResult = client.getJobsApi().register(jobSpec);
+		} catch (IOException | NomadException e) {
+			logger.error(e.getMessage(), e);
+			throw new RuntimeException(e);
+		}
 		logger.info("Deployed app '{}': {}", deploymentId, jobEvalResult);
 
 		return deploymentId;
@@ -76,26 +82,41 @@ public class DockerNomadAppDeployer extends AbstractDockerNomadDeployer implemen
 
 		AppStatus status = status(deploymentId);
 		if (status.getState().equals(DeploymentState.unknown)) {
-			throw new IllegalStateException(String.format("App '%s' is not deployed", deploymentId));
+			throw new IllegalStateException(
+				String.format("App '%s' is not deployed", deploymentId));
 		}
 
-		JobSummary job = getJobByName(deploymentId);
-		client.v1.job.deleteJob(job.getId());
+		try {
+			client.getJobsApi().deregister(deploymentId);
+		} catch (IOException | NomadException e) {
+			logger.error(e.getMessage(), e);
+			throw new RuntimeException(e);
+		}
 	}
 
 	@Override
 	public AppStatus status(String deploymentId) {
-		JobSummary job = getJobByName(deploymentId);
+		Job job;
+		try {
+			job = getJobByName(deploymentId);
+		} catch (NomadException | IOException e) {
+			logger.error(e.getMessage(), e);
+			throw new RuntimeException(e);
+		}
 		if (job == null) {
 			return AppStatus.of(deploymentId).build();
 		}
 
 		AppStatus appStatus;
 		if (!job.getStatus().equals("dead")) {
-			List<JobAllocation> allocations = getAllocationEvaluation(client, job);
-			appStatus = buildAppStatus(deploymentId, allocations);
-		}
-		else {
+			try {
+				List<AllocationListStub> allocations = getAllocationEvaluation(client, job);
+				appStatus = buildAppStatus(deploymentId, allocations);
+			} catch (NomadException | IOException e) {
+				logger.error(e.getMessage(), e);
+				throw new RuntimeException(e);
+			}
+		} else {
 			appStatus = AppStatus.of(deploymentId).with(new AppInstanceStatus() {
 				@Override
 				public String getId() {
@@ -119,77 +140,85 @@ public class DockerNomadAppDeployer extends AbstractDockerNomadDeployer implemen
 
 	@Override
 	public RuntimeEnvironmentInfo environmentInfo() {
-		return createRuntimeEnvironmentInfo(AppDeployer.class, this.getClass());
+		try {
+			return createRuntimeEnvironmentInfo(AppDeployer.class, this.getClass());
+		} catch (NomadException | IOException e) {
+			logger.error(e.getMessage(), e);
+			throw new RuntimeException(e);
+		}
 	}
 
 	@Override
 	protected Task buildTask(AppDeploymentRequest request, String deploymentId) {
-		Task.TaskBuilder taskBuilder = Task.builder();
-		taskBuilder.name(deploymentId);
-		taskBuilder.driver("docker");
-		Task.Config.ConfigBuilder configBuilder = Task.Config.builder();
+		Task taskBuilder = new Task();
+		taskBuilder.setName(deploymentId);
+		taskBuilder.setDriver("docker");
+		Map<String, Object> configBuilder = new HashMap<>();
 		try {
-			configBuilder.image(request.getResource().getURI().getSchemeSpecificPart());
-		}
-		catch (IOException e) {
-			throw new IllegalArgumentException("Unable to get URI for " + request.getResource(), e);
+			configBuilder.put("image", request.getResource().getURI().getSchemeSpecificPart());
+		} catch (IOException e) {
+			throw new IllegalArgumentException(
+				"Unable to get URI for " + request.getResource(), e);
 		}
 
-		Resources.Network network = new Resources.Network();
+		NetworkResource network = new NetworkResource();
 		network.setMBits(deployerProperties.getResources().getNetworkMBits());
-		List<Resources.Network.DynamicPort> dynamicPorts = new ArrayList<>();
-		dynamicPorts.add(new Resources.Network.DynamicPort(configureExternalPort(request), "http"));
+		List<Port> dynamicPorts = new ArrayList<>();
+		dynamicPorts.add(new Port().setValue(configureExternalPort(request)));
 		network.setDynamicPorts(dynamicPorts);
 
-		taskBuilder.resources(new Resources(getCpuResource(deployerProperties, request),
-				getMemoryResource(deployerProperties, request),
-				// deprecated, use
-				// org.springframework.cloud.deployer.spi.nomad.NomadDeployerProperties.EphemeralDisk
-				null, 0, Stream.of(network).collect(toList())));
+		taskBuilder.setResources(new Resources()
+			.setCpu(getCpuResource(deployerProperties, request))
+			.setMemoryMb(getMemoryResource(deployerProperties, request))
+			.setNetworks(singletonList(network)));
 
 		HashMap<String, String> env = new HashMap<>();
 		env.put("SPRING_CLOUD_APPLICATION_GUID", "${NOMAD_ALLOC_ID}");
 		env.putAll(arrayToMap(deployerProperties.getEnvironmentVariables()));
 
-		Map<String, Integer> portMap = new HashMap<>();
-		portMap.put("http", configureExternalPort(request));
-		configBuilder.portMap(Stream.of(portMap).collect(toList()));
-		configBuilder.volumes(createVolumes(deployerProperties, request));
+		// Deprecated: https://www.nomadproject.io/docs/drivers/docker#deprecated-port_map-syntax
+//		Map<String, Integer> portMap = new HashMap<>();
+//		portMap.put("http", configureExternalPort(request));
+//		configBuilder.portMap(Stream.of(portMap).collect(toList()));
+		configBuilder.put("volumes", createVolumes(deployerProperties, request));
 
 		// See
 		// https://github.com/spring-cloud/spring-cloud-deployer-kubernetes/blob/master/src/main/java/org/springframework/cloud/deployer/spi/kubernetes/DefaultContainerFactory.java#L91
-		EntryPointStyle entryPointStyle = determineEntryPointStyle(deployerProperties, request);
+		EntryPointStyle entryPointStyle = determineEntryPointStyle(deployerProperties,
+			request);
 		switch (entryPointStyle) {
-		case exec:
-			configBuilder.args(createCommandLineArguments(request));
-			break;
-		case boot:
-			if (env.containsKey("SPRING_APPLICATION_JSON")) {
-				throw new IllegalStateException(
+			case exec:
+				configBuilder.put("args", createCommandLineArguments(request));
+				break;
+			case boot:
+				if (env.containsKey("SPRING_APPLICATION_JSON")) {
+					throw new IllegalStateException(
 						"You can't use boot entry point style and also set SPRING_APPLICATION_JSON for the app");
-			}
-			try {
-				env.put("SPRING_APPLICATION_JSON",
-						new ObjectMapper().writeValueAsString(request.getDefinition().getProperties()));
-			}
-			catch (JsonProcessingException e) {
-				throw new IllegalStateException("Unable to create SPRING_APPLICATION_JSON", e);
-			}
-			break;
-		case shell:
-			for (String key : request.getDefinition().getProperties().keySet()) {
-				String envVar = key.replace('.', '_').toUpperCase();
-				env.put(envVar, request.getDefinition().getProperties().get(key));
-			}
-			break;
+				}
+				try {
+					env.put("SPRING_APPLICATION_JSON", new ObjectMapper()
+						.writeValueAsString(request.getDefinition().getProperties()));
+				} catch (JsonProcessingException e) {
+					throw new IllegalStateException(
+						"Unable to create SPRING_APPLICATION_JSON", e);
+				}
+				break;
+			case shell:
+				for (String key : request.getDefinition().getProperties().keySet()) {
+					String envVar = key.replace('.', '_').toUpperCase();
+					env.put(envVar, request.getDefinition().getProperties().get(key));
+				}
+				break;
 		}
 
-		taskBuilder.config(configBuilder.build());
-		taskBuilder.env(env);
+		taskBuilder.setConfig(configBuilder);
+		taskBuilder.setEnv(env);
 
-		taskBuilder.logConfig(new Task.LogConfig(deployerProperties.getLoggingMaxFiles(),
-				deployerProperties.getLoggingMaxFileSize()));
+		taskBuilder.setLogConfig(new LogConfig()
+			.setMaxFiles(deployerProperties.getLoggingMaxFiles())
+			.setMaxFileSizeMb(deployerProperties.getLoggingMaxFileSize()));
 
-		return taskBuilder.build();
+		return taskBuilder;
 	}
+
 }

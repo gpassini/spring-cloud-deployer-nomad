@@ -10,13 +10,12 @@ import org.springframework.web.util.UriComponentsBuilder;
  */
 public interface MavenSupport {
 
-	default String toURIString(MavenResource mavenResource, NomadDeployerProperties deployerProperties) {
+	default String toURIString(MavenResource mavenResource,
+			NomadDeployerProperties deployerProperties) {
 		String host = deployerProperties.getDeployerHost();
 		if (!StringUtils.isEmpty(deployerProperties.getDeployerUsername())) {
-			host = String.format("%s:%s@%s",
-				deployerProperties.getDeployerUsername(),
-				deployerProperties.getDeployerPassword(),
-				host);
+			host = String.format("%s:%s@%s", deployerProperties.getDeployerUsername(),
+					deployerProperties.getDeployerPassword(), host);
 		}
 
 		//@formatter:off
@@ -31,4 +30,5 @@ public interface MavenSupport {
 			.toUriString();
 		//@formatter:on
 	}
+
 }

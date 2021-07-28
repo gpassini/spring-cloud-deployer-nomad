@@ -19,4 +19,5 @@ public class MavenResourceResolver implements ResourceResolver {
 
 		return MavenResource.parse(uri, mavenProperties);
 	}
+
 }

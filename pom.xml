@@ -1,16 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+		 xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 
 	<parent>
 		<groupId>org.springframework.cloud</groupId>
 		<artifactId>spring-cloud-deployer-parent</artifactId>
-		<version>1.2.2.RELEASE</version>
+		<version>2.6.1</version>
 	</parent>
 
 	<groupId>org.springframework.cloud</groupId>
 	<artifactId>spring-cloud-deployer-nomad</artifactId>
-	<version>1.2.4.BUILD-SNAPSHOT</version>
+	<version>2.6.1</version>
 
 	<name>spring-cloud-deployer-nomad</name>
 	<description>Spring Cloud Deployer for Nomad</description>
@@ -27,8 +28,8 @@
 		<java.version>1.8</java.version>
 		<animal.sniffer.skip>true</animal.sniffer.skip>
 
-		<nomad-client.version>0.10</nomad-client.version>
-		<spring-cloud-deployer.version>1.2.2.RELEASE</spring-cloud-deployer.version>
+		<spring-cloud-deployer.version>2.6.1</spring-cloud-deployer.version>
+		<nomad.version>0.11.3.0</nomad.version>
 	</properties>
 
 	<dependencyManagement>
@@ -76,13 +77,14 @@
 			<artifactId>spring-boot-starter-web</artifactId>
 		</dependency>
 		<dependency>
-			<groupId>io.github.zanella.nomad</groupId>
-			<artifactId>nomad-api</artifactId>
-			<version>${nomad-client.version}</version>
+			<groupId>com.hashicorp.nomad</groupId>
+			<artifactId>nomad-sdk</artifactId>
+			<version>${nomad.version}</version>
 		</dependency>
 		<dependency>
-			<groupId>org.springframework.cloud</groupId>
-			<artifactId>spring-cloud-starter-consul</artifactId>
+			<groupId>javax.validation</groupId>
+			<artifactId>validation-api</artifactId>
+			<version>2.0.1.Final</version>
 		</dependency>
 
 		<!-- Test -->
@@ -127,6 +129,22 @@
 					<skip>true</skip>
 					<skipDeploy>true</skipDeploy>
 				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>io.spring.javaformat</groupId>
+				<artifactId>spring-javaformat-maven-plugin</artifactId>
+				<executions>
+					<execution>
+						<phase>validate</phase>
+						<configuration>
+							<skip>${disable.checks}</skip>
+						</configuration>
+						<goals>
+							<goal>apply</goal>
+							<goal>validate</goal>
+						</goals>
+					</execution>
+				</executions>
 			</plugin>
 		</plugins>
 	</build>
@@ -211,7 +229,8 @@
 	<distributionManagement>
 		<repository>
 			<id>bintray-switchbit-public</id>
-			<url>https://api.bintray.com/maven/donovanmuller/switchbit-public/spring-cloud-deployer-nomad/;publish=1</url>
+			<url>https://api.bintray.com/maven/donovanmuller/switchbit-public/spring-cloud-deployer-nomad/;publish=1
+			</url>
 		</repository>
 	</distributionManagement>
 </project>

@@ -1,3 +1,2 @@
 org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
-  org.springframework.cloud.deployer.spi.nomad.NomadAutoConfiguration,\
-  org.springframework.cloud.deployer.spi.nomad.NomadWithConsulAutoConfiguration
+  org.springframework.cloud.deployer.spi.nomad.NomadAutoConfiguration
